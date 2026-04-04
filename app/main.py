@@ -8,9 +8,9 @@ def main():
         command = input()
         if command == "exit":
             break
-        if command.startswith("echo"):
+        elif command.startswith("echo"):
             print(command[5:])
-        if command.startswith("type"):
+        elif command.startswith("type"):
             if command[5:] == "echo":
                 print("echo is a shell builtin")
             elif command[5:] == "type":
@@ -21,6 +21,7 @@ def main():
                 print(f"{command[5:]}: not found")
         else:
             print(f"{command}: not found")
+
 
 
 if __name__ == "__main__":
