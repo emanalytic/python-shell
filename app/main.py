@@ -61,6 +61,9 @@ def main():
                 else:
                     print(f"{args[0]}: not found")
             continue
+        elif cmd == "pwd":
+            print(os.getcwd())
+            continue
         # external command execution 
         else:
             try:
