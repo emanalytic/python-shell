@@ -64,6 +64,15 @@ def main():
         elif cmd == "pwd":
             print(os.getcwd())
             continue
+        elif cmd == "cd":
+            if not args:
+                print("cd: missing argument")
+                continue
+            try:
+                os.chdir(args[0])
+            except Exception as e:
+                print(e)
+            continue
         # external command execution 
         else:
             try:
