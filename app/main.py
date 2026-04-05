@@ -5,7 +5,7 @@ import subprocess
 from pathlib import Path
 
 def find_executable(cmd):
-    path_dirs = os.environ.get("PATH", "").split(";")
+    path_dirs = os.environ.get("PATH", "").split(":")
     pathext = os.environ.get("PATHEXT", "").split(";")
 
     ## if cmd already has extension, try directly
