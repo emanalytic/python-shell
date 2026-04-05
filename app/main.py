@@ -18,11 +18,13 @@ def main():
                 print("type is a shell builtin")
             elif command[5:] == "exit":
                 print("exit is a shell builtin")
-        else:
+            else:
                 if os.access(command[5:], os.X_OK):
                     print(f"{command[5:]} is {os.access(command[5:], os.X_OK)}")
                 else:
                     print(f"{command[5:]}: not found")
+        else:
+            print(f"{command}: not found")
 
 
 
