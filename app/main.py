@@ -66,7 +66,7 @@ def main():
             try:
                 exec_path = find_executable(cmd)
                 if exec_path:
-                    subprocess.run([exec_path] + args, executable=exec_path)
+                    subprocess.run([exec_path] + args, executable=str(exec_path))
                 else:
                     print(f"{cmd}: not found")
             except Exception as e:
