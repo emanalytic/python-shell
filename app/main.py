@@ -52,7 +52,7 @@ def main():
                 print("type: missing argument")
                 continue
             
-            if args[0] in ("echo", "type", "exit"):
+            if args[0] in ("echo", "type", "exit", "pwd"):
                 print(f"{args[0]} is a shell builtin")
             else:
                 full_path = find_executable(args[0])
