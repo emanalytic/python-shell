@@ -12,17 +12,24 @@ def main():
         elif command.startswith("echo"):
             print(command[5:])
         elif command.startswith("type"):
-            if command[5:] == "echo":
+            cmd = command[5:].strip()
+            if cmd == "echo":
                 print("echo is a shell builtin")
-            elif command[5:] == "type":
+            elif cmd == "type":
                 print("type is a shell builtin")
-            elif command[5:] == "exit":
+            elif cmd == "exit":
                 print("exit is a shell builtin")
             else:
-                if os.access(command[5:], os.X_OK):
-                    print(f"{command[5:]} is {os.access(command[5:], os.X_OK)}")
-                else:
-                    print(f"{command[5:]}: not found")
+                found = False
+                path_dirs = os.environ.get("PATH").split(":")
+                for directory in path_dirs:
+                    full_path = os.path.join(directory, cmd)
+                    if os.path.isfile(full_path) and os.access(full_path, os.X_OK):
+                        print(f"{cmd} is {full_path}")
+                        found = True
+                        break
+                if not found:
+                    print(f"{cmd}: not found")
         else:
             print(f"{command}: not found")
 
