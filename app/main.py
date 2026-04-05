@@ -11,13 +11,13 @@ def find_executable(cmd):
     ## if cmd already has extension, try directly
     for directory in path_dirs:
         current_path = Path(directory) / cmd
-        if current_path.is_file():
+        if current_path.is_file() and os.access(current_path, os.X_OK):
             return current_path
 
         # try Windows extensions
         for ext in pathext:
             candidate = Path(directory) / (cmd + ext.lower())
-            if candidate.is_file():
+            if candidate.is_file() and os.access(candidate, os.X_OK):
                 return candidate
 
     return None
@@ -57,16 +57,16 @@ def main():
             else:
                 full_path = find_executable(args[0])
                 if full_path:
-                    print(f"{cmd} is {full_path}")
+                    print(f"{args[0]} is {full_path}")
                 else:
-                    print(f"{cmd}: not found")
+                    print(f"{args[0]}: not found")
             continue
         # external command execution 
         else:
             try:
                 exec_path = find_executable(cmd)
                 if exec_path:
-                    subprocess.run([exec_path] + args)
+                    subprocess.run([exec_path] + args, executable=exec_path)
                 else:
                     print(f"{cmd}: not found")
             except Exception as e:
