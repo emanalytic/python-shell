@@ -71,7 +71,7 @@ def main():
             try:
                 os.chdir(args[0])
             except Exception as e:
-                print(e)
+                print(  f"cd: {args[0]}: No such file or directory")
             continue
         # external command execution 
         else:
