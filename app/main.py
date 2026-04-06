@@ -39,7 +39,7 @@ class Shell:
 
     #  builtins  
     def echo(self, args):
-        if ">" in args:
+        if "1>" in args:
             index = args.index(">")
             with open(args[index+1], "w") as f:
                 f.write(" ".join(args[:index]))
