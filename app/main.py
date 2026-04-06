@@ -1,93 +1,128 @@
-from subprocess import check_call
 import sys
 import os
 import subprocess
+import shlex
 from pathlib import Path
 
+
 def find_executable(cmd):
-    path_dirs = os.environ.get("PATH", "").split(":")
-    pathext = os.environ.get("PATHEXT", "").split(";")
+    # use OS-correct path separator
+    path_dirs = os.environ.get("PATH", "").split(os.pathsep)
+    pathext = os.environ.get("PATHEXT", "").split(os.pathsep) if os.name == "nt" else [""]
 
-    ## if cmd already has extension, try directly
     for directory in path_dirs:
-        current_path = Path(directory) / cmd
-        if current_path.is_file() and os.access(current_path, os.X_OK):
-            return current_path
+        base = Path(directory)
 
-        # try Windows extensions
+        # if cmd already contains extension or on Unix
+        candidate = base / cmd
+        if candidate.is_file() and os.access(candidate, os.X_OK):
+            return candidate
+
+        # try windows extension 
         for ext in pathext:
-            candidate = Path(directory) / (cmd + ext.lower())
+            candidate = base / (cmd + ext)
             if candidate.is_file() and os.access(candidate, os.X_OK):
                 return candidate
 
     return None
 
-def main():
-    while True:
-        sys.stdout.write("$ ")
-        sys.stdout.flush()
-        try:
-            command = input()
-        except EOFError:
-            break
-        if command.strip() == "":
-            continue
-        
 
-        argv = command.split()
-        cmd = argv[0]
-        args = argv[1:]
+class Shell:
+    def __init__(self):
+        self.builtins = {
+            "echo": self.echo,
+            "type": self.type_cmd,
+            "exit": self.exit_cmd,
+            "pwd": self.pwd,
+            "cd": self.cd,
+        }
 
-        if cmd == "exit":
-            break
+    #  builtins   
 
+    def echo(self, args):
+        print(" ".join(args))
 
-        ## builtin commands
-        if cmd == "echo":
-            print(command[5:])
-            continue
+    def type_cmd(self, args):
+        if not args:
+            print("type: missing argument")
+            return
 
-        elif cmd == "type":
-            if not args:
-                print("type: missing argument")
-                continue
-            
-            if args[0] in ("echo", "type", "exit", "pwd"):
-                print(f"{args[0]} is a shell builtin")
-            else:
-                full_path = find_executable(args[0])
-                if full_path:
-                    print(f"{args[0]} is {full_path}")
-                else:
-                    print(f"{args[0]}: not found")
-            continue
-        elif cmd == "pwd":
-            print(os.getcwd())
-            continue
-        elif cmd == "cd":
-            if not args:
-                print("cd: missing argument")
-                continue
-            else:
-                target_dir = args[0]
-                if target_dir == "~":
-                    target_dir = os.path.expanduser("~")
-             
-            try:
-                os.chdir(target_dir) #absolute path 
-            except Exception as e:
-                print(  f"cd: {args[0]}: No such file or directory")
-            continue
-        # external command execution 
+        cmd = args[0]
+        if cmd in self.builtins:
+            print(f"{cmd} is a shell builtin")
+            return
+
+        path = find_executable(cmd)
+        if path:
+            print(f"{cmd} is {path}")
         else:
+            print(f"{cmd}: not found")
+
+    def exit_cmd(self, args):
+        sys.exit(0)
+
+    def pwd(self, args):
+        print(os.getcwd())
+
+    def cd(self, args):
+        if not args:
+            target = os.path.expanduser("~")
+        else:
+            target = args[0]
+            if target == "~":
+                target = os.path.expanduser("~")
+
+        try:
+            os.chdir(target)
+        except FileNotFoundError:
+            print(f"cd: {args[0]}: No such file or directory")
+        except Exception as e:
+            print(f"cd: error: {e}")
+
+    #execution 
+
+    def execute(self, cmd, args):
+        # builtin
+        if cmd in self.builtins:
+            return self.builtins[cmd](args)
+
+        # external
+        exec_path = find_executable(cmd)
+        if exec_path:
             try:
-                exec_path = find_executable(cmd)
-                if exec_path:
-                    subprocess.run([cmd] + args, executable=str(exec_path))
-                else:
-                    print(f"{cmd}: not found")
+                subprocess.run([str(exec_path)] + args)
             except Exception as e:
-                print(e)
+                print(f"execution error: {e}")
+        else:
+            print(f"{cmd}: not found")
+
+    #REPL
+
+    def run(self):
+        while True:
+            try:
+                command = input("$ ")
+            except EOFError:
+                break
+
+            if not command.strip():
+                continue
+
+            try:
+                argv = shlex.split(command)
+            except ValueError as e:
+                print(f"parse error: {e}")
+                continue
+
+            cmd = argv[0]
+            args = argv[1:]
+
+            self.execute(cmd, args)
+
+
+def main():
+    Shell().run()
+
 
 if __name__ == "__main__":
     main()
