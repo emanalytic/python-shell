@@ -79,6 +79,18 @@ class Shell:
         except Exception as e:
             print(f"cd: error: {e}")
 
+    def cat(self, args):
+        for file in args:
+            try:
+                with open(file, "r") as f:
+                    print(f.read())
+            except FileNotFoundError:
+                print(f"cat: {file}: No such file or directory")
+            except Exception as e:
+                print(f"cat: error: {e}")
+        
+        
+
     #execution 
 
     def execute(self, cmd, args):
