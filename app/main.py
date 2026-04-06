@@ -39,7 +39,12 @@ class Shell:
 
     #  builtins  
     def echo(self, args):
-        print(" ".join(args))
+        if ">" in args:
+            index = args.index(">")
+            with open(args[index+1], "w") as f:
+                f.write(" ".join(args[:index]))
+        else:
+            print(" ".join(args))  
 
     def type_cmd(self, args):
         if not args:
@@ -82,7 +87,7 @@ class Shell:
         for file in args:
             try:
                 with open(file, "r") as f:
-                    sys.stdout.write(f.read())
+                    print(f.read())
             except FileNotFoundError:
                 print(f"cat: {file}: No such file or directory")
             except Exception as e:
@@ -96,6 +101,8 @@ class Shell:
         # builtin
         if cmd in self.builtins:
             return self.builtins[cmd](args)
+        if cmd == "cat":
+            return self.cat(args)
 
         # external
         exec_path = find_executable(cmd)
