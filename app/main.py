@@ -35,10 +35,10 @@ class Shell:
             "exit": self.exit_cmd,
             "pwd": self.pwd,
             "cd": self.cd,
+            "cat": self.cat,
         }
 
-    #  builtins   
-
+    #  builtins  
     def echo(self, args):
         print(" ".join(args))
 
@@ -102,7 +102,7 @@ class Shell:
         exec_path = find_executable(cmd)
         if exec_path:
             try:
-                subprocess.run([str(exec_path)] + args)
+                subprocess.run([cmd] + args, executable=exec_path)
             except Exception as e:
                 print(f"execution error: {e}")
         else:
