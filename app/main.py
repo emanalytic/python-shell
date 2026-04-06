@@ -92,7 +92,7 @@ class Shell:
 
     #execution 
 
-    def execute(self, cmd, args):
+    def execute(self, cmd, args, redirect=None):
         # builtin
         if cmd in self.builtins:
             return self.builtins[cmd](args)
