@@ -83,15 +83,15 @@ class Shell:
         except Exception as e:
             print(f"cd: error: {e}")
 
-    def cat(self, args):
-        for file in args:
-            try:
-                with open(file, "r") as f:
-                    print(f.read())
-            except FileNotFoundError:
-                print(f"cat: {file}: No such file or directory")
-            except Exception as e:
-                print(f"cat: error: {e}")
+    # def cat(self, args):
+    #     for file in args:
+    #         try:
+    #             with open(file, "r") as f:
+    #                 print(f.read())
+    #         except FileNotFoundError:
+    #             print(f"cat: {file}: No such file or directory")
+    #         except Exception as e:
+    #             print(f"cat: error: {e}")
         
         
 
@@ -101,8 +101,8 @@ class Shell:
         # builtin
         if cmd in self.builtins:
             return self.builtins[cmd](args)
-        if cmd == "cat":
-            return self.cat(args)
+        # if cmd == "cat":
+        #     return self.cat(args)
 
         # external
         exec_path = find_executable(cmd)
