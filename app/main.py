@@ -27,7 +27,6 @@ def find_executable(cmd):
     return None
 
 
-# ---------------- command object ----------------
 
 class Command:
     def __init__(self, name, args, stdout=None):
