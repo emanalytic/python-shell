@@ -27,6 +27,15 @@ def find_executable(cmd):
     return None
 
 
+# ---------------- command object ----------------
+
+class Command:
+    def __init__(self, name, args, stdout=None):
+        self.name = name
+        self.args = args
+        self.stdout = stdout
+
+
 class Shell:
     def __init__(self):
         self.builtins = {
@@ -64,54 +73,78 @@ class Shell:
         print(os.getcwd())
 
     def cd(self, args):
-        if not args:
+        target = args[0] if args else os.path.expanduser("~")
+        if target == "~":
             target = os.path.expanduser("~")
-        else:
-            target = args[0]
-            if target == "~":
-                target = os.path.expanduser("~")
 
         try:
             os.chdir(target)
         except FileNotFoundError:
-            print(f"cd: {args[0]}: No such file or directory")
+            print(f"cd: {target}: No such file or directory")
         except Exception as e:
             print(f"cd: error: {e}")
 
-    # def cat(self, args):
-    #     for file in args:
-    #         try:
-    #             with open(file, "r") as f:
-    #                 print(f.read())
-    #         except FileNotFoundError:
-    #             print(f"cat: {file}: No such file or directory")
-    #         except Exception as e:
-    #             print(f"cat: error: {e}")
-        
-        
+    #execution
 
-    #execution 
-
-    def execute(self, cmd, args, redirect=None):
-        # builtin
-        if cmd in self.builtins:
-            return self.builtins[cmd](args)
-        # if cmd == "cat":
-        #     return self.cat(args)
-
-        # external
-        exec_path = find_executable(cmd)
-        if exec_path:
+    def run_builtin(self, cmd):
+        if cmd.stdout:
             try:
-                if redirect is not None:
-                    with open(redirect, "w") as f:
-                        subprocess.run([cmd] + args, executable=exec_path, stdout=f)
-                else:
-                    subprocess.run([cmd] + args, executable=exec_path)
+                with open(cmd.stdout, "w") as f:
+                    old = sys.stdout
+                    sys.stdout = f
+                    try:
+                        self.builtins[cmd.name](cmd.args)
+                    finally:
+                        sys.stdout = old
             except Exception as e:
-                print(f"execution error: {e}")
+                print(f"error: {e}")
         else:
-            print(f"{cmd}: not found")
+            self.builtins[cmd.name](cmd.args)
+
+    def run_external(self, cmd):
+        exec_path = find_executable(cmd.name)
+        if not exec_path:
+            print(f"{cmd.name}: not found")
+            return
+
+        try:
+            if cmd.stdout:
+                with open(cmd.stdout, "w") as f:
+                    subprocess.run([cmd.name] + cmd.args, executable=exec_path, stdout=f)
+            else:
+                subprocess.run([cmd.name] + cmd.args, executable=exec_path)
+        except Exception as e:
+            print(f"execution error: {e}")
+
+    def execute(self, cmd):
+        # builtin
+        if cmd.name in self.builtins:
+            self.run_builtin(cmd)
+        else:
+            self.run_external(cmd)
+
+    #parsing
+
+    def parse(self, argv):
+        stdout = None
+
+        # handle redirection
+        for op in (">", "1>"):
+            if op in argv:
+                i = argv.index(op)
+
+                if i + 1 >= len(argv):
+                    print("syntax error: missing file")
+                    return None
+
+                stdout = argv[i + 1]
+                argv = argv[:i]
+                break
+
+        if not argv:
+            return None
+
+        return Command(argv[0], argv[1:], stdout)
 
     #REPL
 
@@ -131,27 +164,11 @@ class Shell:
                 print(f"parse error: {e}")
                 continue
 
-            redirect = None
+            cmd = self.parse(argv)
+            if not cmd:
+                continue
 
-            if ">" in argv:
-                i = argv.index(">")
-            elif "1>" in argv:
-                i = argv.index("1>")
-            else:
-                i = -1
-
-            if i != -1:
-                if i + 1 >= len(argv):
-                    print("syntax error: missing file")
-                    continue
-                redirect = argv[i + 1]
-                argv = argv[:i]
-
-            cmd = argv[0]
-            args = argv[1:]
-
-            self.execute(cmd, args, redirect)
-
+            self.execute(cmd)
 
 
 def main():
