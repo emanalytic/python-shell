@@ -83,7 +83,7 @@ class Shell:
         for file in args:
             try:
                 with open(file, "r") as f:
-                    print(f.read())
+                    sys.stdout.write(f.read())
             except FileNotFoundError:
                 print(f"cat: {file}: No such file or directory")
             except Exception as e:
