@@ -72,8 +72,7 @@ def main():
                 target_dir = args[0]
                 if target_dir == "~":
                     target_dir = os.path.expanduser("~")
-                elif target_dir.startswith("/"):
-                    target_dir = target_dir[1:]
+             
             try:
                 os.chdir(target_dir) #absolute path 
             except Exception as e:
