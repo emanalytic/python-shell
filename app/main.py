@@ -39,12 +39,7 @@ class Shell:
 
     #  builtins  
     def echo(self, args):
-        if "1>" in args:
-            index = args.index(">")
-            with open(args[index+1], "w") as f:
-                f.write(" ".join(args[:index]))
-        else:
-            print(" ".join(args))  
+        print(" ".join(args))
 
     def type_cmd(self, args):
         if not args:
@@ -132,10 +127,27 @@ class Shell:
                 print(f"parse error: {e}")
                 continue
 
+            redirect = None
+
+            if ">" in argv:
+                i = argv.index(">")
+            elif "1>" in argv:
+                i = argv.index("1>")
+            else:
+                i = -1
+
+            if i != -1:
+                if i + 1 >= len(argv):
+                    print("syntax error: missing file")
+                    continue
+                redirect = argv[i + 1]
+                argv = argv[:i]
+
             cmd = argv[0]
             args = argv[1:]
 
-            self.execute(cmd, args)
+            self.execute(cmd, args, redirect)
+
 
 
 def main():
