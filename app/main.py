@@ -34,8 +34,7 @@ class Shell:
             "type": self.type_cmd,
             "exit": self.exit_cmd,
             "pwd": self.pwd,
-            "cd": self.cd,
-            "cat": self.cat,
+            "cd": self.cd
         }
 
     #  builtins  
