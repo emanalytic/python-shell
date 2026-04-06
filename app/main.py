@@ -103,7 +103,11 @@ class Shell:
         exec_path = find_executable(cmd)
         if exec_path:
             try:
-                subprocess.run([cmd] + args, executable=exec_path)
+                if redirect is not None:
+                    with open(redirect, "w") as f:
+                        subprocess.run([cmd] + args, executable=exec_path, stdout=f)
+                else:
+                    subprocess.run([cmd] + args, executable=exec_path)
             except Exception as e:
                 print(f"execution error: {e}")
         else:
