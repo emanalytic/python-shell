@@ -113,11 +113,16 @@ class Shell:
                     subprocess.run(
                         [cmd.name] + cmd.args,
                         executable=exec_path,
-                        stdout=f if cmd.stdout else None,
+                        stdout=open(cmd.stdout, "w") if cmd.stdout else None,
                         stderr=open(cmd.stderr, "w") if cmd.stderr else None
                     )
             else:
-                subprocess.run([cmd.name] + cmd.args, executable=exec_path)
+                subprocess.run(
+                    [cmd.name] + cmd.args,
+                    executable=exec_path,
+                    stdout=open(cmd.stdout, "w") if cmd.stdout else None,
+                    stderr=open(cmd.stderr, "w") if cmd.stderr else None
+                )
         except Exception as e:
             print(f"execution error: {e}")
 
