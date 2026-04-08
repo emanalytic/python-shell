@@ -145,23 +145,23 @@ class Shell:
     def parse(self, argv):
         stdout = None
         stderr = None
+        i = 0
 
-        # handle redirection
-        for op in (">", "1>", "2>"):
-            if op in argv:
-                i = argv.index(op)
-
+        while i < len(argv):
+            if argv[i] in (">", "1>", "2>"):
                 if i + 1 >= len(argv):
                     print("syntax error: missing file")
                     return None
-                if op == "2>":
-                    stderr = argv[i + 1]
-                    argv = argv[:i]
-                    break
 
-                stdout = argv[i + 1]
-                argv = argv[:i]
-                break
+                if argv[i] in (">", "1>"):
+                    stdout = argv[i + 1]
+                else:
+                    stderr = argv[i + 1]
+
+                del argv[i:i+2]
+                continue
+
+            i += 1
 
         if not argv:
             return None
