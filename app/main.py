@@ -29,10 +29,11 @@ def find_executable(cmd):
 
 
 class Command:
-    def __init__(self, name, args, stdout=None):
+    def __init__(self, name, args, stdout=None, stderr=None):
         self.name = name
         self.args = args
         self.stdout = stdout
+        self.stderr = stderr
 
 
 class Shell:
@@ -109,7 +110,12 @@ class Shell:
         try:
             if cmd.stdout:
                 with open(cmd.stdout, "w") as f:
-                    subprocess.run([cmd.name] + cmd.args, executable=exec_path, stdout=f)
+                    subprocess.run(
+                        [cmd.name] + cmd.args,
+                        executable=exec_path,
+                        stdout=f if cmd.stdout else None,
+                        stderr=open(cmd.stderr, "w") if cmd.stderr else None
+                    )
             else:
                 subprocess.run([cmd.name] + cmd.args, executable=exec_path)
         except Exception as e:
@@ -126,6 +132,7 @@ class Shell:
 
     def parse(self, argv):
         stdout = None
+        stderr = None
 
         # handle redirection
         for op in (">", "1>", "2>"):
@@ -147,7 +154,7 @@ class Shell:
         if not argv:
             return None
 
-        return Command(argv[0], argv[1:], stdout)
+        return Command(argv[0], argv[1:], stdout, stderr)
 
     #REPL
 
