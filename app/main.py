@@ -1,201 +1,33 @@
-import sys
-import os
-import subprocess
 import shlex
-from pathlib import Path
-
-
-def find_executable(cmd):
-    # use OS-correct path separator
-    path_dirs = os.environ.get("PATH", "").split(os.pathsep)
-    pathext = os.environ.get("PATHEXT", "").split(os.pathsep) if os.name == "nt" else [""]
-
-    for directory in path_dirs:
-        base = Path(directory)
-
-        # if cmd already contains extension or on Unix
-        candidate = base / cmd
-        if candidate.is_file() and os.access(candidate, os.X_OK):
-            return candidate
-
-        # try windows extension 
-        for ext in pathext:
-            candidate = base / (cmd + ext)
-            if candidate.is_file() and os.access(candidate, os.X_OK):
-                return candidate
-
-    return None
-
-
-
-class Command:
-    def __init__(self, name, args, stdout=None, stderr=None):
-        self.name = name
-        self.args = args
-        self.stdout = stdout
-        self.stderr = stderr
-
-
-class Shell:
-    def __init__(self):
-        self.builtins = {
-            "echo": self.echo,
-            "type": self.type_cmd,
-            "exit": self.exit_cmd,
-            "pwd": self.pwd,
-            "cd": self.cd
-        }
-
-    #  builtins  
-    def echo(self, args):
-        print(" ".join(args))
-
-    def type_cmd(self, args):
-        if not args:
-            print("type: missing argument")
-            return
-
-        cmd = args[0]
-        if cmd in self.builtins:
-            print(f"{cmd} is a shell builtin")
-            return
-
-        path = find_executable(cmd)
-        if path:
-            print(f"{cmd} is {path}")
-        else:
-            print(f"{cmd}: not found")
-
-    def exit_cmd(self, args):
-        sys.exit(0)
-
-    def pwd(self, args):
-        print(os.getcwd())
-
-    def cd(self, args):
-        target = args[0] if args else os.path.expanduser("~")
-        if target == "~":
-            target = os.path.expanduser("~")
-
-        try:
-            os.chdir(target)
-        except FileNotFoundError:
-            print(f"cd: {target}: No such file or directory")
-        except Exception as e:
-            print(f"cd: error: {e}")
-
-    #execution
-
-    def run_builtin(self, cmd):
-        if cmd.stdout:
-            try:
-                with open(cmd.stdout, "w") as f:
-                    old = sys.stdout
-                    sys.stdout = f
-                    try:
-                        self.builtins[cmd.name](cmd.args)
-                    finally:
-                        sys.stdout = old
-            except Exception as e:
-                print(f"error: {e}")
-        else:
-            self.builtins[cmd.name](cmd.args)
-
-    def run_external(self, cmd):
-        exec_path = find_executable(cmd.name)
-        if not exec_path:
-            print(f"{cmd.name}: not found")
-            return
-
-        stdout_f = None
-        stderr_f = None
-
-        try:
-            if cmd.stdout:
-                stdout_f = open(cmd.stdout, "w")
-
-            if cmd.stderr:
-                stderr_f = open(cmd.stderr, "w")
-
-            subprocess.run(
-                [cmd.name] + cmd.args,
-                executable=exec_path,
-                stdout=stdout_f,
-                stderr=stderr_f
-            )
-
-        except Exception as e:
-            print(f"execution error: {e}")
-
-        finally:
-            if stdout_f:
-                stdout_f.close()
-            if stderr_f:
-                stderr_f.close()
-
-    def execute(self, cmd):
-        # builtin
-        if cmd.name in self.builtins:
-            self.run_builtin(cmd)
-        else:
-            self.run_external(cmd)
-
-    #parsing
-
-    def parse(self, argv):
-        stdout = None
-        stderr = None
-        i = 0
-
-        while i < len(argv):
-            if argv[i] in (">", "1>", "2>"):
-                if i + 1 >= len(argv):
-                    print("syntax error: missing file")
-                    return None
-
-                if argv[i] in (">", "1>"):
-                    stdout = argv[i + 1]
-                else:
-                    stderr = argv[i + 1]
-
-                del argv[i:i+2]
-                continue
-
-            i += 1
-
-        if not argv:
-            return None
-
-        return Command(argv[0], argv[1:], stdout, stderr)
-
-    #REPL
-
-    def run(self):
-        while True:
-            try:
-                command = input("$ ")
-            except EOFError:
-                break
-
-            if not command.strip():
-                continue
-
-            try:
-                argv = shlex.split(command)
-            except ValueError as e:
-                print(f"parse error: {e}")
-                continue
-
-            cmd = self.parse(argv)
-            if not cmd:
-                continue
-
-            self.execute(cmd)
-
+from app.builtins import Builtins
+from app.parser import Parser
+from app.executor import Executor
 
 def main():
-    Shell().run()
+    builtins = Builtins()
+    parser = Parser()
+    executor = Executor(builtins)
 
+    while True:
+        try:
+            command = input("$ ")
+        except EOFError:
+            break
+
+        if not command.strip():
+            continue
+
+        try:
+            argv = shlex.split(command)
+        except ValueError as e:
+            print(f"parse error: {e}")
+            continue
+
+        cmd = parser.parse(argv)
+        if not cmd:
+            continue
+
+        executor.execute(cmd)
 
 if __name__ == "__main__":
     main()
