@@ -139,7 +139,7 @@ class Shell:
                 stdout = argv[i + 1]
                 argv = argv[:i]
                 break
-        for op in ["2>", "2>>", "<"]:
+        for op  in "2>":
             if op in argv:
                 i = argv.index(op)
 
