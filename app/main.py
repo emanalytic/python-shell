@@ -135,6 +135,10 @@ class Shell:
                 if i + 1 >= len(argv):
                     print("syntax error: missing file")
                     return None
+                if op == "2>":
+                    stderr = argv[i + 1]
+                    argv = argv[:i]
+                    break
 
                 stdout = argv[i + 1]
                 argv = argv[:i]
