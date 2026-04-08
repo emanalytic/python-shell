@@ -107,24 +107,31 @@ class Shell:
             print(f"{cmd.name}: not found")
             return
 
+        stdout_f = None
+        stderr_f = None
+
         try:
             if cmd.stdout:
-                with open(cmd.stdout, "w") as f:
-                    subprocess.run(
-                        [cmd.name] + cmd.args,
-                        executable=exec_path,
-                        stdout=open(cmd.stdout, "w") if cmd.stdout else None,
-                        stderr=open(cmd.stderr, "w") if cmd.stderr else None
-                    )
-            else:
-                subprocess.run(
-                    [cmd.name] + cmd.args,
-                    executable=exec_path,
-                    stdout=open(cmd.stdout, "w") if cmd.stdout else None,
-                    stderr=open(cmd.stderr, "w") if cmd.stderr else None
-                )
+                stdout_f = open(cmd.stdout, "w")
+
+            if cmd.stderr:
+                stderr_f = open(cmd.stderr, "w")
+
+            subprocess.run(
+                [cmd.name] + cmd.args,
+                executable=exec_path,
+                stdout=stdout_f,
+                stderr=stderr_f
+            )
+
         except Exception as e:
             print(f"execution error: {e}")
+
+        finally:
+            if stdout_f:
+                stdout_f.close()
+            if stderr_f:
+                stderr_f.close()
 
     def execute(self, cmd):
         # builtin
