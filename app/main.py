@@ -139,6 +139,17 @@ class Shell:
                 stdout = argv[i + 1]
                 argv = argv[:i]
                 break
+        for op in ["2>", "2>>", "<"]:
+            if op in argv:
+                i = argv.index(op)
+
+                if i + 1 >= len(argv):
+                    print("syntax error: missing file")
+                    return None
+
+                stdout = argv[i + 1]
+                argv = argv[:i]
+                break
 
         if not argv:
             return None
