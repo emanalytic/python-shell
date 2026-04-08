@@ -128,18 +128,7 @@ class Shell:
         stdout = None
 
         # handle redirection
-        for op in (">", "1>"):
-            if op in argv:
-                i = argv.index(op)
-
-                if i + 1 >= len(argv):
-                    print("syntax error: missing file")
-                    return None
-
-                stdout = argv[i + 1]
-                argv = argv[:i]
-                break
-        for op  in "2>":
+        for op in (">", "1>", "2>"):
             if op in argv:
                 i = argv.index(op)
 
